@@ -1,12 +1,13 @@
 package main
 
 import (
+	"log"
+	"net/http"
+	"time"
+
 	"github.com/ant0ine/go-json-rest/rest"
 	_ "github.com/go-sql-driver/mysql"
 	"github.com/jinzhu/gorm"
-    "log"
-	"net/http"
-	"time"
 )
 
 func main() {
@@ -29,26 +30,25 @@ type Impl struct {
 }
 
 type Article struct {
-    ID                int64  `json:"id"`
-    UserID            int64  `json:"userId"`
-    Title             string `json:"title"`
-    Content           string `json:"content"`
-	CreatedAt		  time.Time `json:"createdAt"`
-	UpdatedAt         time.Time `json:"updatedAt"`
+	ID        int64     `json:"id"`
+	UserID    int64     `json:"userId"`
+	Title     string    `json:"title"`
+	Content   string    `json:"content"`
+	CreatedAt time.Time `json:"createdAt"`
+	UpdatedAt time.Time `json:"updatedAt"`
 }
 
-
 func (i *Impl) InitDB() {
-    var err error
-    i.DB, err = gorm.Open("mysql", "daily:daily@(mysql)/daily?charset=utf8&parseTime=True&loc=Local")
-    if err != nil {
-        log.Fatalf("Got error when connect database, the error is '%v'", err)
-    }
-    i.DB.LogMode(true)
+	var err error
+	i.DB, err = gorm.Open("mysql", "daily:daily@(mysql)/daily?charset=utf8&parseTime=True&loc=Local")
+	if err != nil {
+		log.Fatalf("Got error when connect database, the error is '%v'", err)
+	}
+	i.DB.LogMode(true)
 }
 
 func (i *Impl) PostDaily(w rest.ResponseWriter, r *rest.Request) {
-	reminder := Articles{}
+	reminder := Article{}
 	if err := r.DecodeJsonPayload(&reminder); err != nil {
 		rest.Error(w, err.Error(), http.StatusInternalServerError)
 		return
