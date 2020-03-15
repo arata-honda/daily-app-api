@@ -1,0 +1,10 @@
+CREATE TABLE daily.users (
+    id INT AUTO_INCREMENT NOT NULL PRIMARY KEY,
+    name VARCHAR(70) NOT NULL,
+    email VARCHAR(254),
+    profile VARCHAR(140),
+    profile_img_path VARCHAR(50),
+    header_img_path VARCHAR(50),
+    created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
+);
