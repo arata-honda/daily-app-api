@@ -17,6 +17,7 @@ func main() {
 	api.Use(rest.DefaultDevStack...)
 	router, err := rest.MakeRouter(
 		rest.Post("/daily", i.PostDaily),
+		rest.Get("/healthcheck", i.GetHealthCheck),
 	)
 	if err != nil {
 		log.Fatal(err)
@@ -58,4 +59,8 @@ func (i *Impl) PostDaily(w rest.ResponseWriter, r *rest.Request) {
 		return
 	}
 	w.WriteJson(&reminder)
+}
+
+func (i *Impl) GetHealthCheck(w rest.ResponseWriter, r *rest.Request) {
+	w.WriteJson(map[string]string{"Body": "OK"})
 }
