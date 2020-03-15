@@ -14,4 +14,4 @@ $ cd arata-honda/daily-app-api
 $ docker-compose up -d
 ```
 
-起動後 http://localhost:8080 で 返ってくればよい。
+起動後 http://localhost:8080/healthcheck で'{"Body": "OK"}' 返ってくればよい。
