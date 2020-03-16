@@ -12,6 +12,7 @@
 $ git clone https://github.com/arata-honda/daily-app-api.git
 $ cd arata-honda/daily-app-api
 $ docker-compose up -d
+$ sh init-mysql.sh
 ```
 
 起動後 http://localhost:8080/healthcheck で'{"Body": "OK"}' 返ってくればよい。
