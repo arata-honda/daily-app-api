@@ -2,13 +2,14 @@ package main
 
 import (
 	"context"
+	"fmt"
 	"log"
 	"net/http"
-	"os"
 	"strings"
 	"time"
 
 	firebase "firebase.google.com/go"
+	"firebase.google.com/go/auth"
 	"github.com/ant0ine/go-json-rest/rest"
 	_ "github.com/go-sql-driver/mysql"
 	"github.com/jinzhu/gorm"
@@ -24,6 +25,7 @@ func main() {
 		rest.Post("/daily", i.PostDaily),
 		rest.Get("/healthcheck", i.GetHealthCheck),
 		rest.Post("/auth", i.PostAuth),
+		rest.Post("/create_user", i.CreateUser),
 	)
 	if err != nil {
 		log.Fatal(err)
@@ -37,12 +39,28 @@ type Impl struct {
 }
 
 type Article struct {
-	ID        int64     `json:"id"`
 	UserID    int64     `json:"userId"`
 	Title     string    `json:"title"`
 	Content   string    `json:"content"`
 	CreatedAt time.Time `json:"createdAt"`
 	UpdatedAt time.Time `json:"updatedAt"`
+}
+
+type CreateUserParameter struct {
+	Name           string `json:"name"`
+	Email          string `json:"email"`
+	Profile        string `json:"profile"`
+	ProfileImgPath string `json:"profileImgPath"`
+	HeaderImgPath  string `json:"headerImaPath"`
+	PassWord       string `json:"passWord"`
+}
+
+type User struct {
+	Name           string `json:"name"`
+	Email          string `json:"email"`
+	Profile        string `json:"profile"`
+	ProfileImgPath string `json:"profileImgPath"`
+	HeaderImgPath  string `json:"headerImaPath"`
 }
 
 func (i *Impl) InitDB() {
@@ -69,6 +87,54 @@ func (i *Impl) PostDaily(w rest.ResponseWriter, r *rest.Request) {
 
 func (i *Impl) GetHealthCheck(w rest.ResponseWriter, r *rest.Request) {
 	w.WriteJson(map[string]string{"Body": "OK"})
+}
+
+func (i *Impl) CreateUser(w rest.ResponseWriter, r *rest.Request) {
+	// Firebase SDK のセットアップ
+	opt := option.WithCredentialsFile("./envfiles/admin_sdk_firebase.json")
+	ctx := context.Background()
+	app, err := firebase.NewApp(ctx, nil, opt)
+	if err != nil {
+		log.Fatalf("error: %v\n", err)
+	}
+	client, err := app.Auth(ctx)
+	if err != nil {
+		log.Fatalf("error: %v\n", err)
+	}
+
+	createUserParameter := CreateUserParameter{}
+
+	if err := r.DecodeJsonPayload(&createUserParameter); err != nil {
+		rest.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	params := (&auth.UserToCreate{}).
+		Email(createUserParameter.Email).
+		EmailVerified(false).
+		Password(createUserParameter.PassWord).
+		DisplayName(createUserParameter.Name).
+		Disabled(false)
+	u, err := client.CreateUser(ctx, params)
+
+	dbparams := User{
+		Name:           createUserParameter.Name,
+		Email:          createUserParameter.Email,
+		Profile:        createUserParameter.Profile,
+		ProfileImgPath: createUserParameter.ProfileImgPath,
+		HeaderImgPath:  createUserParameter.HeaderImgPath}
+
+	if err != nil {
+		log.Fatalf("error creating user: %v\n", err)
+	}
+	log.Printf("Successfully created user: %v\n", u)
+
+	if err := i.DB.Save(dbparams).Error; err != nil {
+		rest.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	w.WriteJson(map[string]string{"Body": "Created"})
 }
 
 func (i *Impl) PostAuth(w rest.ResponseWriter, r *rest.Request) {
