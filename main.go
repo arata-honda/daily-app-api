@@ -2,9 +2,9 @@ package main
 
 import (
 	"context"
-	"fmt"
 	"log"
 	"net/http"
+	"os"
 	"strings"
 	"time"
 
@@ -13,12 +13,14 @@ import (
 	"github.com/ant0ine/go-json-rest/rest"
 	_ "github.com/go-sql-driver/mysql"
 	"github.com/jinzhu/gorm"
+	"github.com/joho/godotenv"
 	"google.golang.org/api/option"
 )
 
 func main() {
 	i := Impl{}
 	i.InitDB()
+	godotenv.Load()
 	api := rest.NewApi()
 	api.Use(rest.DefaultDevStack...)
 	router, err := rest.MakeRouter(
@@ -91,7 +93,7 @@ func (i *Impl) GetHealthCheck(w rest.ResponseWriter, r *rest.Request) {
 
 func (i *Impl) CreateUser(w rest.ResponseWriter, r *rest.Request) {
 	// Firebase SDK のセットアップ
-	opt := option.WithCredentialsFile("./envfiles/admin_sdk_firebase.json")
+	opt := option.WithCredentialsFile(os.Getenv("FIREBASE_ADMIN_SDK_FILENAME"))
 	ctx := context.Background()
 	app, err := firebase.NewApp(ctx, nil, opt)
 	if err != nil {
