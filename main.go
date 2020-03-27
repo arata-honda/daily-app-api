@@ -146,6 +146,7 @@ func (i *Impl) CreateUser(w rest.ResponseWriter, r *rest.Request) {
 		return
 	}
 
+	w.WriteHeader(http.StatusCreated)
 	w.WriteJson(map[string]string{"Body": "Created"})
 }
 
