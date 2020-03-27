@@ -124,6 +124,7 @@ func (i *Impl) CreateUser(w rest.ResponseWriter, r *rest.Request) {
 		DisplayName(createUserParameter.Name).
 		Disabled(false)
 
+	// TODO: DB更新が確定してからFirebaseに登録する
 	u, err := client.CreateUser(ctx, params)
 	if err != nil {
 		log.Printf("error: creating user %v\n", err)
@@ -140,6 +141,7 @@ func (i *Impl) CreateUser(w rest.ResponseWriter, r *rest.Request) {
 		ProfileImgPath: createUserParameter.ProfileImgPath,
 		HeaderImgPath:  createUserParameter.HeaderImgPath}
 
+	// TODO: DB更新に失敗したらロールバックする
 	if err := i.DB.Save(dbparams).Error; err != nil {
 		log.Printf("error: creating user %v\n", err)
 		rest.Error(w, err.Error(), http.StatusBadRequest)
