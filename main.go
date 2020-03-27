@@ -95,18 +95,24 @@ func (i *Impl) CreateUser(w rest.ResponseWriter, r *rest.Request) {
 	// Firebase SDK のセットアップ
 	opt := option.WithCredentialsFile(os.Getenv("FIREBASE_ADMIN_SDK_FILENAME"))
 	ctx := context.Background()
+
 	app, err := firebase.NewApp(ctx, nil, opt)
 	if err != nil {
-		log.Fatalf("error: %v\n", err)
+		log.Printf("error: %v\n", err)
+		rest.Error(w, err.Error(), http.StatusInternalServerError)
+		return
 	}
+
 	client, err := app.Auth(ctx)
 	if err != nil {
-		log.Fatalf("error: %v\n", err)
+		log.Printf("error: %v\n", err)
+		rest.Error(w, err.Error(), http.StatusInternalServerError)
+		return
 	}
 
 	createUserParameter := CreateUserParameter{}
-
 	if err := r.DecodeJsonPayload(&createUserParameter); err != nil {
+		log.Printf("error: %v\n", err)
 		rest.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
@@ -117,7 +123,15 @@ func (i *Impl) CreateUser(w rest.ResponseWriter, r *rest.Request) {
 		Password(createUserParameter.PassWord).
 		DisplayName(createUserParameter.Name).
 		Disabled(false)
+
 	u, err := client.CreateUser(ctx, params)
+	if err != nil {
+		log.Printf("error: creating user %v\n", err)
+		rest.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	log.Printf("Successfully created user: %v\n", u)
 
 	dbparams := User{
 		Name:           createUserParameter.Name,
@@ -126,13 +140,9 @@ func (i *Impl) CreateUser(w rest.ResponseWriter, r *rest.Request) {
 		ProfileImgPath: createUserParameter.ProfileImgPath,
 		HeaderImgPath:  createUserParameter.HeaderImgPath}
 
-	if err != nil {
-		log.Fatalf("error creating user: %v\n", err)
-	}
-	log.Printf("Successfully created user: %v\n", u)
-
 	if err := i.DB.Save(dbparams).Error; err != nil {
-		rest.Error(w, err.Error(), http.StatusInternalServerError)
+		log.Printf("error: creating user %v\n", err)
+		rest.Error(w, err.Error(), http.StatusBadRequest)
 		return
 	}
 
